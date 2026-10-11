@@ -1,0 +1,37 @@
+# ---------------------------------------------------------------
+# Packages for the Gen_AI learning project (Text2SQL)
+# Install all of them with:   uv pip install -r requirements.txt
+# Full explanations: notes/00_project_setup.md
+# ---------------------------------------------------------------
+
+# The main LangChain framework: prompts, chains (LCEL), output parsers.
+langchain
+
+# Connects LangChain to Google's Gemini models (chat + embeddings).
+langchain-google-genai
+
+# Community-built extras: SQLDatabase helper, document loaders, vector stores.
+# Note: being sunset (no longer maintained). Fine for learning; we'll replace it later.
+langchain-community
+
+# Builds agents as graphs (nodes, edges, loops, memory). Used from Phase 5.
+langgraph
+
+# Loads secrets (like GOOGLE_API_KEY) from the .env file into the program.
+python-dotenv
+
+# Vector store for RAG: saves embeddings to disk and searches them fast. Phase 4.
+# (Pulls in chromadb, the actual database engine, plus its dependencies.)
+langchain-chroma
+
+# Reads text out of PDF files (used by LangChain's PyPDFLoader). Phase 4.
+pypdf
+
+# Keyword (BM25) search for hybrid retrieval. Optional bonus in Lesson 4.5.
+rank-bm25
+
+# Parses SQL into a tree: safety allowlist + value checks in Text2SQL v0.4. Phase 5.
+sqlglot
+
+# Talks to databases (SQLite, Postgres, MySQL...). LangChain's SQL tools use it underneath.
+sqlalchemy

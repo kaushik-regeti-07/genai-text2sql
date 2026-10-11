@@ -1,0 +1,7 @@
+.venv/
+.env
+__pycache__/
+chroma_db/
+*.pyc
+# Zips are copies of folders already in the repo (made for sharing)
+*.zip
