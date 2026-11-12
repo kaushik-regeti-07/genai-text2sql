@@ -30,16 +30,20 @@ Bot:  There are 29 tracks in the 90's Music playlist by Nirvana.
 | 3 | **LangChain**: chat models, prompts, LCEL chains, structured output, tools | v0.1–v0.2: question → SQL → answer | ✅ |
 | 4 | **RAG**: embeddings, Chroma, loaders/splitters, retrieval, evaluation | v0.3: schema RAG (only relevant tables) | ✅ |
 | 5 | **LangGraph**: state, routing, loops, memory, human-in-the-loop, multi-agent | v0.4–v0.5: self-correcting graph + chat | ✅ |
-| 6 | **Production**: web UI ✅, persistent memory ✅, web API ✅, tracing, evaluation, deployment | v1.0 | 🔄 |
+| 6 | **Production**: web UI, persistent memory, web API, tracing, hold-out evaluation, deploy-ready | v1.0 | ✅ |
 
 **Start reading at:** [notes/00_project_setup.md](notes/00_project_setup.md). Each phase has a story-style
-recap: [Phase 3](notes/07_phase3_recap.md), [Phase 4](notes/14_phase4_recap.md), [Phase 5](notes/19_phase5_recap.md).
+recap: [Phase 3](notes/07_phase3_recap.md), [Phase 4](notes/14_phase4_recap.md), [Phase 5](notes/19_phase5_recap.md),
+[Phase 6](notes/21_phase6_recap.md).
 
 ## Highlights
 - **Self-correcting SQL** (LangGraph): validate → retry with specific feedback, up to 3 attempts
 - **Layered safety**: parsed SQL allowlist (sqlglot), read-only database, optional human approval
 - **Schema RAG**: retrieve relevant tables + foreign-key expansion (48% smaller prompts, same accuracy)
-- **Measured, not guessed**: evaluation scripts for every major change (v0.4: 15/15 vs v0.3: 13/15)
+- **Measured, not guessed**: evaluation scripts for every major change, plus a 24-question
+  **hold-out set** never used for tuning (96%)
+- **Web app, API and saved memory**: Streamlit chat with tables and charts, FastAPI endpoints,
+  conversations stored in SQLite
 
 ## Setup
 Requires Python 3.12 and a free [Google AI Studio](https://aistudio.google.com) API key (Gemini).

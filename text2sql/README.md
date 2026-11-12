@@ -13,6 +13,7 @@ python -m text2sql.main --thread ravi                    # continue a named conv
 python -m text2sql.main --list                           # list saved conversations
 python -m text2sql.main --approve                        # ask before running each query
 python -m text2sql.main "Which genre sells the most?"    # one question
+python -m text2sql.evals.eval_holdout                    # 24 unseen questions (the honest test)
 python -m text2sql.evals.eval_graph                      # v0.3 chain vs v0.4 graph
 python -m text2sql.evals.eval_schema_rag                 # v0.2 full schema vs v0.3 schema RAG
 ```
@@ -25,12 +26,16 @@ python -m text2sql.evals.eval_schema_rag                 # v0.2 full schema vs v
 | v0.3 | Schema RAG: retrieve only relevant tables + foreign-key expansion | 4 | ✅ |
 | v0.4 | LangGraph: validate -> execute -> self-correct loop, value check, schema fallback | 5 | ✅ |
 | v0.5 | Router, conversation memory + follow-up rewriting, human approval | 5 | ✅ |
-| v1.0 | Streamlit UI ✅, persistent memory ✅, FastAPI ✅, tracing, hold-out eval, deployment | 6 | 🔄 |
+| v1.0 | Streamlit UI, persistent memory, FastAPI, LangSmith-ready tracing, hold-out eval, deploy-ready | 6 | ✅ |
 
 **Evaluations**
 - v0.3 vs v0.2 (12 gold questions): needed tables found 12/12, schema 48% smaller, SQL correct 11/12 for both.
 - v0.4 vs v0.3 (12 gold + 3 "messy value" questions): **v0.4 15/15**, v0.3 13/15. Both misses were the
   "90’s Music" playlist (curly apostrophe), which v0.4's value check + retry fixes.
+- **Hold-out (24 NEW questions, never used for tuning):** v0.3 chain 23/24, graph 23/24 (96%).
+  Different misses: the chain failed a lowercase name ("led zeppelin"); the graph once listed
+  album ids instead of counting them (valid SQL, wrong question; only evaluation catches that).
+  Results: `evals/results/`.
 
 ## How v0.4/v0.5 works (`app/graph.py`)
 ```
@@ -68,7 +73,14 @@ START → router ─┬─ greeting  → greet → END
 4. Optional human approval before execution (`--approve`)
 5. Database opened read-only (`mode=ro`)
 
+## Deploying (Streamlit Community Cloud)
+share.streamlit.io → sign in with GitHub → Create app → this repo, branch `main`, file
+`text2sql/ui/app.py` → Advanced settings: Python 3.12, Secrets as in `.streamlit/secrets.toml.example`
+(set `APP_PASSWORD` for a public URL). Details: `notes/20_phase6_production.md`, section 6.6.
+
 ## Known limitations
+- Valid-but-wrong SQL (e.g. listing instead of counting) passes every check; no self-review node yet
+- On Streamlit Cloud, saved chats reset when the app restarts (temporary disk)
 - Pronouns can be ambiguous ("her" → the last person mentioned)
 - The value check covers `=` and `IN`, not `LIKE`
 - Table descriptions are hand-written; evaluation sets are small (overfitting risk)

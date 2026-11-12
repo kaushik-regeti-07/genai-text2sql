@@ -48,7 +48,9 @@ class ChatResponse(BaseModel):
 
 
 def _config(thread_id: str) -> dict:
-    return {"configurable": {"thread_id": thread_id}}
+    return {"configurable": {"thread_id": thread_id},
+            "run_name": "text2sql-chat", "tags": ["api"],         # labels for LangSmith traces
+            "metadata": {"thread_id": thread_id}}
 
 
 def _response(thread_id: str, out: dict) -> ChatResponse:

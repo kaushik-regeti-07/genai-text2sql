@@ -32,6 +32,20 @@ EXAMPLES = [
 st.set_page_config(page_title="Text2SQL · Chinook", page_icon="🎵", layout="wide")
 
 
+def load_streamlit_secrets() -> None:
+    """On Streamlit Cloud the keys live in st.secrets; copy them into the environment variables
+    the app already reads (GOOGLE_API_KEY, APP_PASSWORD, LANGSMITH_*). Locally: .env is used."""
+    try:
+        for key, value in st.secrets.items():
+            if isinstance(value, str):
+                os.environ.setdefault(key, value)
+    except Exception:          # no secrets file (running locally) → nothing to copy
+        pass
+
+
+load_streamlit_secrets()
+
+
 # ---------- shared resources: created once per server, reused by every page refresh ----------
 @st.cache_resource
 def get_checkpointer():
@@ -142,7 +156,9 @@ with st.sidebar:
     st.caption("Chinook music store · Gemini · LangGraph")
 
 # ---------- main area ----------
-config = {"configurable": {"thread_id": st.session_state.thread_id}}
+config = {"configurable": {"thread_id": st.session_state.thread_id},
+          "run_name": "text2sql-chat", "tags": ["web"],          # labels for LangSmith traces
+          "metadata": {"thread_id": st.session_state.thread_id}}
 approval_graph = get_graph(True)
 snapshot = approval_graph.get_state(config)
 

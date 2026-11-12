@@ -1,0 +1,315 @@
+{
+  "date": "2026-11-12",
+  "totals": {
+    "v0.3 chain": 23,
+    "v0.4+ graph": 23
+  },
+  "n": 24,
+  "by_category": {
+    "simple": [
+      3,
+      3,
+      3
+    ],
+    "join": [
+      7,
+      7,
+      7
+    ],
+    "aggregation": [
+      3,
+      2,
+      3
+    ],
+    "ranking": [
+      5,
+      5,
+      5
+    ],
+    "date": [
+      2,
+      2,
+      2
+    ],
+    "messy value": [
+      1,
+      2,
+      2
+    ],
+    "unanswerable": [
+      2,
+      2,
+      2
+    ]
+  },
+  "questions": [
+    {
+      "category": "simple",
+      "question": "How many employees work at the store?",
+      "chain_correct": true,
+      "graph_correct": true,
+      "graph_attempts": 1,
+      "graph_fixes": [],
+      "graph_sql": "SELECT COUNT(*) FROM Employee",
+      "chain_seconds": 10.3,
+      "graph_seconds": 23.8
+    },
+    {
+      "category": "simple",
+      "question": "What is the highest price of any track?",
+      "chain_correct": true,
+      "graph_correct": true,
+      "graph_attempts": 1,
+      "graph_fixes": [],
+      "graph_sql": "SELECT MAX(UnitPrice) FROM Track LIMIT 5",
+      "chain_seconds": 3.2,
+      "graph_seconds": 4.4
+    },
+    {
+      "category": "simple",
+      "question": "What is the average invoice total?",
+      "chain_correct": true,
+      "graph_correct": true,
+      "graph_attempts": 1,
+      "graph_fixes": [],
+      "graph_sql": "SELECT AVG(Total) FROM Invoice",
+      "chain_seconds": 2.1,
+      "graph_seconds": 4.9
+    },
+    {
+      "category": "join",
+      "question": "How many tracks are in the Rock genre?",
+      "chain_correct": true,
+      "graph_correct": true,
+      "graph_attempts": 1,
+      "graph_fixes": [],
+      "graph_sql": "SELECT COUNT(*) FROM Track t JOIN Genre g ON t.GenreId = g.GenreId WHERE g.Name = 'Rock'",
+      "chain_seconds": 3.1,
+      "graph_seconds": 18.2
+    },
+    {
+      "category": "join",
+      "question": "How many albums does Iron Maiden have?",
+      "chain_correct": true,
+      "graph_correct": true,
+      "graph_attempts": 1,
+      "graph_fixes": [],
+      "graph_sql": "SELECT COUNT(*) FROM Album JOIN Artist ON Album.ArtistId = Artist.ArtistId WHERE Artist.Name = 'Iron Maiden'",
+      "chain_seconds": 2.7,
+      "graph_seconds": 5.6
+    },
+    {
+      "category": "join",
+      "question": "How many albums does Metallica have?",
+      "chain_correct": true,
+      "graph_correct": true,
+      "graph_attempts": 1,
+      "graph_fixes": [],
+      "graph_sql": "SELECT COUNT(*) FROM Album JOIN Artist ON Album.ArtistId = Artist.ArtistId WHERE Artist.Name = 'Metallica'",
+      "chain_seconds": 3.4,
+      "graph_seconds": 4.3
+    },
+    {
+      "category": "join",
+      "question": "What genre is the song Smells Like Teen Spirit?",
+      "chain_correct": true,
+      "graph_correct": true,
+      "graph_attempts": 1,
+      "graph_fixes": [],
+      "graph_sql": "SELECT T1.Name FROM Genre AS T1 INNER JOIN Track AS T2 ON T1.GenreId = T2.GenreId WHERE T2.Name = 'Smells Like Teen Spirit' LIMIT 5",
+      "chain_seconds": 3.2,
+      "graph_seconds": 4.0
+    },
+    {
+      "category": "join",
+      "question": "How many tracks are in the Grunge playlist?",
+      "chain_correct": true,
+      "graph_correct": true,
+      "graph_attempts": 1,
+      "graph_fixes": [],
+      "graph_sql": "SELECT COUNT(*) FROM PlaylistTrack PT JOIN Playlist P ON PT.PlaylistId = P.PlaylistId WHERE P.Name = 'Grunge'",
+      "chain_seconds": 2.2,
+      "graph_seconds": 40.1
+    },
+    {
+      "category": "join",
+      "question": "How many customers does Steve Johnson support?",
+      "chain_correct": true,
+      "graph_correct": true,
+      "graph_attempts": 1,
+      "graph_fixes": [],
+      "graph_sql": "SELECT COUNT(*) FROM Customer c JOIN Employee e ON c.SupportRepId = e.EmployeeId WHERE e.FirstName = 'Steve' AND e.LastName = 'Johnson'",
+      "chain_seconds": 6.0,
+      "graph_seconds": 3.3
+    },
+    {
+      "category": "join",
+      "question": "How many Classical tracks are there?",
+      "chain_correct": true,
+      "graph_correct": true,
+      "graph_attempts": 1,
+      "graph_fixes": [],
+      "graph_sql": "SELECT COUNT(*) FROM Track t JOIN Genre g ON t.GenreId = g.GenreId WHERE g.Name = 'Classical';",
+      "chain_seconds": 2.4,
+      "graph_seconds": 3.7
+    },
+    {
+      "category": "aggregation",
+      "question": "What is the total revenue from Germany?",
+      "chain_correct": true,
+      "graph_correct": true,
+      "graph_attempts": 1,
+      "graph_fixes": [],
+      "graph_sql": "SELECT SUM(Invoice.Total) FROM Invoice JOIN Customer ON Invoice.CustomerId = Customer.CustomerId WHERE Customer.Country = 'Germany'",
+      "chain_seconds": 2.0,
+      "graph_seconds": 33.4
+    },
+    {
+      "category": "aggregation",
+      "question": "How many Jazz tracks are longer than 6 minutes?",
+      "chain_correct": true,
+      "graph_correct": true,
+      "graph_attempts": 1,
+      "graph_fixes": [],
+      "graph_sql": "SELECT COUNT(*) FROM Track t JOIN Genre g ON t.GenreId = g.GenreId WHERE g.Name = 'Jazz' AND t.Milliseconds > 360000",
+      "chain_seconds": 4.0,
+      "graph_seconds": 126.3
+    },
+    {
+      "category": "aggregation",
+      "question": "How many albums have more than 20 tracks?",
+      "chain_correct": true,
+      "graph_correct": false,
+      "graph_attempts": 1,
+      "graph_fixes": [],
+      "graph_sql": "SELECT AlbumId FROM Track GROUP BY AlbumId HAVING COUNT(*) > 20 LIMIT 5",
+      "chain_seconds": 20.8,
+      "graph_seconds": 3.1
+    },
+    {
+      "category": "ranking",
+      "question": "Which media type has the most tracks?",
+      "chain_correct": true,
+      "graph_correct": true,
+      "graph_attempts": 1,
+      "graph_fixes": [],
+      "graph_sql": "SELECT MediaType.Name, COUNT(Track.TrackId) AS TrackCount FROM Track JOIN MediaType ON Track.MediaTypeId = MediaType.MediaTypeId GROUP BY MediaType.Name ORDER BY TrackCount DESC LIMIT 5",
+      "chain_seconds": 2.2,
+      "graph_seconds": 67.5
+    },
+    {
+      "category": "ranking",
+      "question": "Who is the youngest employee?",
+      "chain_correct": true,
+      "graph_correct": true,
+      "graph_attempts": 1,
+      "graph_fixes": [],
+      "graph_sql": "SELECT FirstName, LastName FROM Employee ORDER BY BirthDate DESC LIMIT 1",
+      "chain_seconds": 61.5,
+      "graph_seconds": 3.8
+    },
+    {
+      "category": "ranking",
+      "question": "Which composer wrote the most tracks?",
+      "chain_correct": true,
+      "graph_correct": true,
+      "graph_attempts": 1,
+      "graph_fixes": [],
+      "graph_sql": "SELECT Composer FROM Track WHERE Composer IS NOT NULL GROUP BY Composer ORDER BY COUNT(*) DESC LIMIT 1;",
+      "chain_seconds": 22.4,
+      "graph_seconds": 23.0
+    },
+    {
+      "category": "ranking",
+      "question": "Which customer has spent the most money?",
+      "chain_correct": true,
+      "graph_correct": true,
+      "graph_attempts": 1,
+      "graph_fixes": [],
+      "graph_sql": "SELECT T1.CustomerId, T1.FirstName, T1.LastName, SUM(T2.Total) AS TotalSpent FROM Customer AS T1 INNER JOIN Invoice AS T2 ON T1.CustomerId = T2.CustomerId GROUP BY T1.CustomerId ORDER BY TotalSpent DESC LIMIT 5",
+      "chain_seconds": 2.7,
+      "graph_seconds": 20.1
+    },
+    {
+      "category": "ranking",
+      "question": "Which country has the highest average invoice total?",
+      "chain_correct": true,
+      "graph_correct": true,
+      "graph_attempts": 1,
+      "graph_fixes": [],
+      "graph_sql": "SELECT BillingCountry FROM Invoice GROUP BY BillingCountry ORDER BY AVG(Total) DESC LIMIT 1",
+      "chain_seconds": 44.1,
+      "graph_seconds": 29.8
+    },
+    {
+      "category": "date",
+      "question": "How many invoices were issued in 2024?",
+      "chain_correct": true,
+      "graph_correct": true,
+      "graph_attempts": 1,
+      "graph_fixes": [],
+      "graph_sql": "SELECT COUNT(*) FROM Invoice WHERE strftime('%Y', InvoiceDate) = '2024'",
+      "chain_seconds": 2.2,
+      "graph_seconds": 29.0
+    },
+    {
+      "category": "date",
+      "question": "Which year had the highest total sales?",
+      "chain_correct": true,
+      "graph_correct": true,
+      "graph_attempts": 1,
+      "graph_fixes": [],
+      "graph_sql": "SELECT strftime('%Y', InvoiceDate) AS Year, SUM(Total) AS TotalSales FROM Invoice GROUP BY Year ORDER BY TotalSales DESC LIMIT 1",
+      "chain_seconds": 2.3,
+      "graph_seconds": 19.3
+    },
+    {
+      "category": "messy value",
+      "question": "how many customers are from the united kingdom?",
+      "chain_correct": true,
+      "graph_correct": true,
+      "graph_attempts": 1,
+      "graph_fixes": [],
+      "graph_sql": "SELECT COUNT(*) FROM Customer WHERE Country = 'United Kingdom'",
+      "chain_seconds": 26.4,
+      "graph_seconds": 3.3
+    },
+    {
+      "category": "messy value",
+      "question": "how many tracks does led zeppelin have?",
+      "chain_correct": false,
+      "graph_correct": true,
+      "graph_attempts": 1,
+      "graph_fixes": [],
+      "graph_sql": "SELECT COUNT(*) FROM Track JOIN Album ON Track.AlbumId = Album.AlbumId JOIN Artist ON Album.ArtistId = Artist.ArtistId WHERE Artist.Name = 'Led Zeppelin'",
+      "chain_seconds": 1.9,
+      "graph_seconds": 44.4
+    },
+    {
+      "category": "unanswerable",
+      "question": "What is the profit margin on each track?",
+      "chain_correct": true,
+      "graph_correct": true,
+      "graph_attempts": 2,
+      "graph_fixes": [
+        "Not answerable with tables Album, Genre, Invoice, InvoiceLine, MediaType, Track; retrying with all 11 tables."
+      ],
+      "graph_sql": "",
+      "chain_seconds": 2.0,
+      "graph_seconds": 52.2
+    },
+    {
+      "category": "unanswerable",
+      "question": "Which customers left a product review?",
+      "chain_correct": true,
+      "graph_correct": true,
+      "graph_attempts": 2,
+      "graph_fixes": [
+        "Not answerable with tables Customer, Employee, Invoice, InvoiceLine, Track; retrying with all 11 tables."
+      ],
+      "graph_sql": "",
+      "chain_seconds": 16.9,
+      "graph_seconds": 27.1
+    }
+  ]
+}

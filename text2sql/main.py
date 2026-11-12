@@ -60,7 +60,9 @@ def main() -> None:
         return
 
     graph = build_chat_graph(checkpointer=checkpointer, approval=args.approve)
-    config = {"configurable": {"thread_id": args.thread}}   # one conversation = one thread
+    config = {"configurable": {"thread_id": args.thread},  # one conversation = one thread
+              "run_name": "text2sql-chat", "tags": ["cli"],  # labels for LangSmith traces
+              "metadata": {"thread_id": args.thread}}
 
     if args.question:
         ask(graph, config, " ".join(args.question))
