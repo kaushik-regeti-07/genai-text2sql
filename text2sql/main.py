@@ -1,7 +1,10 @@
-"""Command-line app (v0.5: a LangGraph conversation). Run from the Gen_AI folder:
+"""Command-line app (v1.0: a LangGraph conversation with saved memory). Run from the Gen_AI folder:
 
-    python -m text2sql.main                         (interactive chat with memory)
+    python -m text2sql.main                         (chat; continues the "cli-session" conversation)
+    python -m text2sql.main --thread ravi           (continue / start the conversation named "ravi")
+    python -m text2sql.main --list                  (show saved conversations)
     python -m text2sql.main --approve               (ask before running each query)
+    python -m text2sql.main --no-save               (don't save this conversation)
     python -m text2sql.main "How many artists?"     (one question, then exit)
 """
 import argparse
@@ -9,7 +12,8 @@ import argparse
 from langchain_core.messages import HumanMessage
 from langgraph.types import Command
 
-from text2sql.app.graph import build_chat_graph, make_checkpointer
+from text2sql.app.config import MEMORY_DB_PATH
+from text2sql.app.graph import build_chat_graph, list_threads, make_checkpointer
 
 
 def show(out: dict) -> None:
@@ -43,17 +47,29 @@ def ask(graph, config: dict, text: str) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Chat with the Chinook music store database.")
     parser.add_argument("--approve", action="store_true", help="ask before running each SQL query")
+    parser.add_argument("--thread", default="cli-session", help="conversation name (memory is per name)")
+    parser.add_argument("--list", action="store_true", help="list saved conversations and exit")
+    parser.add_argument("--no-save", action="store_true", help="keep memory in RAM only")
     parser.add_argument("question", nargs="*", help="a single question to answer, then exit")
     args = parser.parse_args()
 
-    graph = build_chat_graph(checkpointer=make_checkpointer(), approval=args.approve)
-    config = {"configurable": {"thread_id": "cli-session"}}   # one conversation = one thread
+    checkpointer = make_checkpointer(None if args.no_save else MEMORY_DB_PATH)
+    if args.list:
+        threads = list_threads(checkpointer)
+        print("Saved conversations:", ", ".join(threads) if threads else "(none)")
+        return
+
+    graph = build_chat_graph(checkpointer=checkpointer, approval=args.approve)
+    config = {"configurable": {"thread_id": args.thread}}   # one conversation = one thread
 
     if args.question:
         ask(graph, config, " ".join(args.question))
         return
 
-    print("Text2SQL - chat about the Chinook music store. Follow-up questions work! Type 'exit' to quit.")
+    previous = graph.get_state(config).values.get("turns") or []
+    print(f"Text2SQL - conversation '{args.thread}'"
+          + (f" ({len(previous)} earlier questions remembered)" if previous else "")
+          + ". Follow-up questions work! Type 'exit' to quit.")
     while True:
         text = input("\nYou: ").strip()
         if text.lower() in {"", "exit", "quit"}:

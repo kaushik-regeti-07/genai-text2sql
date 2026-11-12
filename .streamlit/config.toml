@@ -1,0 +1,8 @@
+# Streamlit settings for the Text2SQL web app (read when you run `streamlit run` from the Gen_AI folder)
+
+[browser]
+gatherUsageStats = false   # don't send anonymous usage statistics to Streamlit
+
+[theme]
+base = "dark"
+primaryColor = "#7c6cf0"

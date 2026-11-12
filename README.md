@@ -30,7 +30,7 @@ Bot:  There are 29 tracks in the 90's Music playlist by Nirvana.
 | 3 | **LangChain**: chat models, prompts, LCEL chains, structured output, tools | v0.1–v0.2: question → SQL → answer | ✅ |
 | 4 | **RAG**: embeddings, Chroma, loaders/splitters, retrieval, evaluation | v0.3: schema RAG (only relevant tables) | ✅ |
 | 5 | **LangGraph**: state, routing, loops, memory, human-in-the-loop, multi-agent | v0.4–v0.5: self-correcting graph + chat | ✅ |
-| 6 | **Production**: web UI, persistent memory, tracing, evaluation, deployment | v1.0 | ⬜ |
+| 6 | **Production**: web UI ✅, persistent memory ✅, web API ✅, tracing, evaluation, deployment | v1.0 | 🔄 |
 
 **Start reading at:** [notes/00_project_setup.md](notes/00_project_setup.md). Each phase has a story-style
 recap: [Phase 3](notes/07_phase3_recap.md), [Phase 4](notes/14_phase4_recap.md), [Phase 5](notes/19_phase5_recap.md).
@@ -48,7 +48,7 @@ uv venv
 .venv\Scripts\activate
 uv pip install -r requirements.txt
 copy .env.example .env        # then put your GOOGLE_API_KEY in .env
-python -m text2sql.main
+streamlit run text2sql/ui/app.py    # web app   (or: python -m text2sql.main for the terminal)
 ```
 
 ## Tech

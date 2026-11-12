@@ -33,5 +33,16 @@ rank-bm25
 # Parses SQL into a tree: safety allowlist + value checks in Text2SQL v0.4. Phase 5.
 sqlglot
 
+# ---------- Phase 6 (v1.0) ----------
+# Web app: chat page with tables and charts (text2sql/ui/app.py).
+streamlit
+
+# Saves conversations to a SQLite file so memory survives restarts.
+langgraph-checkpoint-sqlite
+
+# Web API (text2sql/api.py) and the server that runs it.
+fastapi
+uvicorn
+
 # Talks to databases (SQLite, Postgres, MySQL...). LangChain's SQL tools use it underneath.
 sqlalchemy

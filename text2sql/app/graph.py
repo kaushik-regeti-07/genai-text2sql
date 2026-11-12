@@ -5,19 +5,25 @@ v0.4  build_sql_graph():  find tables -> write SQL -> validate -> execute -> exp
 v0.5  build_chat_graph(): + a router (greeting / off-topic / database question),
                           + memory across turns (checkpointer) with follow-up rewriting,
                           + optional human approval before a query runs (interrupt).
+v1.0  + persistent memory (SQLite checkpointer), a results table and a per-turn history
+        (`turns`) so a web UI or API can redraw any conversation.
 """
+import operator
+import sqlite3
+from pathlib import Path
 from typing import Annotated, Optional, TypedDict
 
 from langchain_core.messages import AIMessage, AnyMessage, HumanMessage
 from langchain_core.output_parsers import StrOutputParser
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.types import interrupt
 
 from text2sql.app.config import MAX_ATTEMPTS, TOP_K
-from text2sql.app.db import check_sql, check_values, get_db, run_sql
+from text2sql.app.db import check_sql, check_values, get_db, run_table
 from text2sql.app.llm import get_llm
 from text2sql.app.prompts import (ANSWER_PROMPT, GREETING_REPLY, OFF_TOPIC_REPLY, RETRY_MESSAGE,
                                   ROUTER_PROMPT, SQL_PROMPT)
@@ -38,7 +44,10 @@ class State(TypedDict, total=False):
     fix_log: list[str]                # every problem that was fixed along the way (for display)
     widened: bool                     # True once we fell back to the full schema
     result: Optional[str]             # rows, or NOT_ANSWERABLE / ERROR / CANCELLED
+    columns: list[str]                # v1.0: result table for the UI / API
+    rows: list[list]
     answer: Optional[str]             # the final English answer
+    turns: Annotated[list[dict], operator.add]   # v1.0: one record per question, APPENDED (history)
 
 
 # ======================= nodes (each = one job) =======================
@@ -53,16 +62,38 @@ def router(state: State) -> dict:
         "route": decision.category,
         "question": str(decision.standalone_question or latest),
         "tables": [], "schema": "", "sql_query": None, "attempts": 0,
-        "error": None, "fix_log": [], "widened": False, "result": None, "answer": None,
+        "error": None, "fix_log": [], "widened": False, "result": None,
+        "columns": [], "rows": [], "answer": None,
     }
 
 
+def _turn(state: State, answer: str, **extra) -> dict:
+    """One history record (v1.0): everything a UI needs to redraw this question later."""
+    query = state.get("sql_query")
+    record = {
+        "user": state["messages"][-1].content if state.get("messages") else state.get("question"),
+        "route": state.get("route", "database_question"),
+        "question": state.get("question"),
+        "tables": state.get("tables") or [],
+        "sql": query.sql if query is not None else "",
+        "fix_log": state.get("fix_log") or [],
+        "columns": state.get("columns") or [],
+        "rows": state.get("rows") or [],
+        "result": state.get("result"),
+        "answer": answer,
+    }
+    record.update(extra)
+    return record
+
+
 def greet(state: State) -> dict:
-    return {"answer": GREETING_REPLY, "messages": [AIMessage(GREETING_REPLY)]}
+    return {"answer": GREETING_REPLY, "messages": [AIMessage(GREETING_REPLY)],
+            "turns": [_turn(state, GREETING_REPLY)]}
 
 
 def off_topic(state: State) -> dict:
-    return {"answer": OFF_TOPIC_REPLY, "messages": [AIMessage(OFF_TOPIC_REPLY)]}
+    return {"answer": OFF_TOPIC_REPLY, "messages": [AIMessage(OFF_TOPIC_REPLY)],
+            "turns": [_turn(state, OFF_TOPIC_REPLY)]}
 
 
 def pick_tables(state: State) -> dict:
@@ -123,8 +154,10 @@ def approve(state: State) -> dict:
 
 
 def execute(state: State) -> dict:
-    ok, rows = run_sql(state["sql_query"].sql)
-    return {"result": rows} if ok else {"error": rows}
+    ok, as_text, columns, rows = run_table(state["sql_query"].sql)
+    if not ok:
+        return {"error": as_text}
+    return {"result": as_text, "columns": columns, "rows": rows}
 
 
 def explain(state: State) -> dict:
@@ -138,7 +171,8 @@ def explain(state: State) -> dict:
         result = state.get("result") or "(no rows)"
     answer = str((ANSWER_PROMPT | get_llm() | StrOutputParser()).invoke(
         {"question": state["question"], "result": result}))
-    return {"result": result, "answer": answer, "messages": [AIMessage(answer)]}
+    return {"result": result, "answer": answer, "messages": [AIMessage(answer)],
+            "turns": [_turn(state, answer, result=result)]}
 
 
 # ======================= routing (which node runs next) =======================
@@ -181,11 +215,31 @@ def after_execute(state: State) -> str:
 
 # ======================= graphs =======================
 
-def make_checkpointer() -> InMemorySaver:
-    """Memory for build_chat_graph. The state holds our own SQLQuery objects; when memory is
-    loaded back, LangGraph only rebuilds custom classes we explicitly allow (a safety feature)."""
+def make_checkpointer(path: Optional[Path] = None):
+    """Memory for build_chat_graph.
+
+    path=None  -> InMemorySaver: forgotten when the program stops (Phase 5).
+    path=file  -> SqliteSaver:   saved to a SQLite file, survives restarts (v1.0).
+
+    The state holds our own SQLQuery objects; when memory is loaded back, LangGraph only
+    rebuilds custom classes we explicitly allow (a safety feature)."""
     serde = JsonPlusSerializer(allowed_msgpack_modules=[("text2sql.app.schemas", "SQLQuery")])
-    return InMemorySaver(serde=serde)
+    if path is None:
+        return InMemorySaver(serde=serde)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    # check_same_thread=False: web servers (Streamlit, FastAPI) call from different threads
+    conn = sqlite3.connect(str(path), check_same_thread=False)
+    return SqliteSaver(conn, serde=serde)
+
+
+def list_threads(checkpointer) -> list[str]:
+    """All saved conversation ids, most recently used first."""
+    seen = []
+    for checkpoint in checkpointer.list(None):          # newest checkpoints come first
+        thread_id = checkpoint.config["configurable"]["thread_id"]
+        if thread_id not in seen:
+            seen.append(thread_id)
+    return seen
 
 
 

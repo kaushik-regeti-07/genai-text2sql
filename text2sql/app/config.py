@@ -19,3 +19,7 @@ FK_HOPS = 1   # then add tables they reference through foreign keys, this many s
 
 # LangGraph (v0.4 / v0.5)
 MAX_ATTEMPTS = 3  # how many times the graph may write SQL for one question (1 try + 2 fixes)
+
+# Production (v1.0)
+MEMORY_DB_PATH = PROJECT_ROOT / "text2sql" / "data" / "memory.sqlite"  # saved conversations
+MAX_TABLE_ROWS = 200  # rows kept for the results table in the UI / API

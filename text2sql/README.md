@@ -6,7 +6,11 @@ runs it read-only and explains the result. Follow-up questions work.
 ## Run it
 From the `Gen_AI` folder with the virtual environment active:
 ```powershell
-python -m text2sql.main                                  # chat (memory + follow-ups)
+streamlit run text2sql/ui/app.py                         # web app (tables, charts, saved chats)
+uvicorn text2sql.api:app --reload                        # web API, docs at http://127.0.0.1:8000/docs
+python -m text2sql.main                                  # terminal chat (memory saved to SQLite)
+python -m text2sql.main --thread ravi                    # continue a named conversation
+python -m text2sql.main --list                           # list saved conversations
 python -m text2sql.main --approve                        # ask before running each query
 python -m text2sql.main "Which genre sells the most?"    # one question
 python -m text2sql.evals.eval_graph                      # v0.3 chain vs v0.4 graph
@@ -21,7 +25,7 @@ python -m text2sql.evals.eval_schema_rag                 # v0.2 full schema vs v
 | v0.3 | Schema RAG: retrieve only relevant tables + foreign-key expansion | 4 | ✅ |
 | v0.4 | LangGraph: validate -> execute -> self-correct loop, value check, schema fallback | 5 | ✅ |
 | v0.5 | Router, conversation memory + follow-up rewriting, human approval | 5 | ✅ |
-| v1.0 | Streamlit UI, persistent memory, tracing, bigger evals, deployment | 6 | |
+| v1.0 | Streamlit UI ✅, persistent memory ✅, FastAPI ✅, tracing, hold-out eval, deployment | 6 | 🔄 |
 
 **Evaluations**
 - v0.3 vs v0.2 (12 gold questions): needed tables found 12/12, schema 48% smaller, SQL correct 11/12 for both.
@@ -42,7 +46,9 @@ START → router ─┬─ greeting  → greet → END
 - Memory: checkpointer + one thread id per conversation (`make_checkpointer()` allow-lists `SQLQuery`)
 
 ## Layout
-- `main.py`                  - chat CLI (v0.5)
+- `ui/app.py`                - Streamlit web app (v1.0)
+- `api.py`                   - FastAPI web API (v1.0)
+- `main.py`                  - chat CLI
 - `app/config.py`            - settings (paths, models, row limit, TABLE_K, FK_HOPS, MAX_ATTEMPTS)
 - `app/llm.py`               - chat + embedding models (the only provider-specific file)
 - `app/db.py`                - read-only engine, foreign keys, columns, SQL allowlist, value check, safe runner
@@ -63,8 +69,6 @@ START → router ─┬─ greeting  → greet → END
 5. Database opened read-only (`mode=ro`)
 
 ## Known limitations
-- Memory is in RAM: restarting the app forgets the conversation
 - Pronouns can be ambiguous ("her" → the last person mentioned)
 - The value check covers `=` and `IN`, not `LIKE`
 - Table descriptions are hand-written; evaluation sets are small (overfitting risk)
-- Terminal only

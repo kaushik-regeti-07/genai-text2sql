@@ -2,6 +2,11 @@
 .env
 __pycache__/
 chroma_db/
+# Saved conversations (personal data, generated at runtime)
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
 *.pyc
 # Zips are copies of folders already in the repo (made for sharing)
 *.zip

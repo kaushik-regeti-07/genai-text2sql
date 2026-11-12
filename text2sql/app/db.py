@@ -7,7 +7,7 @@ from langchain_community.utilities import SQLDatabase
 from sqlalchemy import Engine, create_engine, inspect, text
 from sqlglot import exp
 
-from text2sql.app.config import DB_PATH
+from text2sql.app.config import DB_PATH, MAX_TABLE_ROWS
 
 # Statement types that may never appear anywhere in a query (checked on every node of the parse tree).
 WRITE_NODES = (exp.Insert, exp.Update, exp.Delete, exp.Drop, exp.Create, exp.Alter, exp.Command)
@@ -118,6 +118,23 @@ def check_values(sql: str) -> str | None:
                 suggestions = ", ".join(repr(lowered[c]) for c in close)
                 problems.append(f"{table}.{column} has no value {value!r}. Did you mean: {suggestions}?")
     return " ".join(problems) or None
+
+
+def run_table(sql: str) -> tuple[bool, str, list[str], list[list]]:
+    """Check and run a query, returning a TABLE for the UI as well as text for the LLM.
+    Returns (ok, text, columns, rows). Never raises. Keeps at most MAX_TABLE_ROWS rows."""
+    problem = check_sql(sql)
+    if problem:
+        return False, problem, [], []
+    try:
+        with get_engine().connect() as conn:
+            res = conn.execute(text(sql.strip().rstrip(";")))
+            columns = list(res.keys())
+            rows = [list(r) for r in res.fetchmany(MAX_TABLE_ROWS)]
+    except Exception as e:
+        return False, f"{type(e).__name__}: {e}", [], []
+    as_text = str([tuple(r) for r in rows]) if rows else "(no rows)"
+    return True, as_text, columns, rows
 
 
 def run_sql(sql: str) -> tuple[bool, str]:
